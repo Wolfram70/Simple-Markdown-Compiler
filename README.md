@@ -12,7 +12,7 @@ Headings can be written by prefixing a string with tag and enclosing it by curly
 Lists can be declared with the &lt;list> and &lt;/list> tags. New items can be added with the &lt;si> tag inside a list. Whenever a new item is to being written, it should be started with &lt;si> to parse it as such. For example, <br>
 <b>&lt;list>&lt;si>one &lt;si>two&lt;/list></b> will be parsed as: <br>
 1. one
-2. two<br><br>
+2. two<br>
 
 <b>Note:</b> Lists cannot be declared inside a paragraph and must be declared outside.
 
