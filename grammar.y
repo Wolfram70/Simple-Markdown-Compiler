@@ -20,11 +20,12 @@
 	char *str;
 	int count;
 }
-%token STRING
+
 %token OPENPARA CLOSEPARA
 %token STARTLIST ENDLIST STARTHEADING ENDHEADING
 %token STARTITEM
 %token NEWLINE
+%token STRING
 
 %right OPENPARA
 %left CLOSEPARA
@@ -62,21 +63,39 @@ listmed:
 	}
 	;
 
-expr:
-	OPENPARA string CLOSEPARA {
-		$$ = $2;
+string:
+	STRING {
+		$$ = $1;
+	}
+	| string STRING {
+		$$ = $1;
+		strcat($$, $2);
+	}
+	| string NEWLINE {
+		$$ = $1;
+		strcat($$, "\n");
+	}
+	;
+
+heading:
+	STARTHEADING string ENDHEADING {
+		$$ = strupr($2);
 		char temp[5000];
-		if ($$[0] == '$')
-		{
-			sprintf(temp, "%s\n", ++$$);
-		}
-		else sprintf(temp, "\t%s\n", $$);
+		sprintf(temp, "\n%s\n", $$);
+		$$ = temp;
+	}
+	;
+
+expr:
+	OPENPARA string CLOSEPARA{
+		char temp[5000];
+		if($2[0] == '$') sprintf(temp, "%s\n", ++$2);
+		else sprintf(temp, "\t%s\n", $2);
 		$$ = temp;
 	}
 	| OPENPARA expr CLOSEPARA {
-		$$ = $2;
 		char temp[5000];
-		sprintf(temp, "\t%s\n", $$);
+		sprintf(temp, "\t%s\n", $2);
 		$$ = temp;
 	}
 	| string expr {
@@ -92,28 +111,6 @@ expr:
 	}
 	;
 
-heading:
-	STARTHEADING string ENDHEADING {
-		$$ = strupr($2);
-		char temp[5000];
-		sprintf(temp, "\n%s\n", $$);
-		$$ = temp;
-	}
-	;
-
-string:
-	STRING {
-		$$ = $1;
-	}
-	| string STRING {
-		$$ = $1;
-		strcat($$, $2);
-	}
-	| string NEWLINE {
-		$$ = $1;
-		strcat($$, "\n");
-	}
-	;
 program:
 	program expr {
 		printf("%s", $2);
@@ -132,4 +129,4 @@ int main(void)
 {
  yyparse();
  return 0;
-} 
+}
