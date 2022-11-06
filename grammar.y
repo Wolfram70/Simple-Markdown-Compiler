@@ -41,6 +41,7 @@
 %type<str> list
 %type<str> listmed
 %type<str> heading
+%type<str> exprmed
 %%
 
 list:
@@ -86,6 +87,22 @@ heading:
 	}
 	;
 
+exprmed:
+	string expr {
+		$$ = $1;
+		strcat($$, "\n");
+		strcat($$, $2);
+	}
+	| exprmed string {
+		$$ = $1;
+		strcat($$, $2);
+	}
+	| exprmed expr {
+		$$ = $1;
+		strcat($$, $2);
+	}
+	;
+
 expr:
 	OPENPARA string CLOSEPARA{
 		char temp[5000];
@@ -98,25 +115,27 @@ expr:
 		sprintf(temp, "\t%s\n", $2);
 		$$ = temp;
 	}
-	| string expr {
-		$$ = $1;
-		strcat($$, "\n");
-		strcat($$, $2);
-	}
 	| list {
 		$$ = $1;
 	}
 	| heading {
 		$$ = $1;
 	}
+	| exprmed {
+		$$ = $1;
+	}
 	;
 
 program:
 	program expr {
-		printf("%s", $2);
+		$$ = $2;
+		printf("%s", $$);
+		$$[0] = '\0';
 	}
 	| expr {
-		printf("%s", $1);
+		$$ = $1;
+		printf("%s", $$);
+		$$[0] = '\0';
 	}
 	;
 
