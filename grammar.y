@@ -13,7 +13,7 @@
         *tmp = toupper((unsigned char) *tmp);
     }
 
-    return s;
+    return s; 
  }
 %}
 %union {
@@ -21,7 +21,16 @@
 	int count;
 }
 %token STRING
-%token OPENPARA CLOSEPARA NEWLINE STARTLIST ENDLIST STARTITEM STARTHEADING ENDHEADING
+%token OPENPARA CLOSEPARA
+%token STARTLIST ENDLIST STARTHEADING ENDHEADING
+%token STARTITEM
+%token NEWLINE
+
+%right OPENPARA
+%left CLOSEPARA
+%nonassoc STARTLIST ENDLIST
+
+%start program
 
 %type<str> STRING
 %type<count> STARTITEM
@@ -33,28 +42,21 @@
 %type<str> heading
 %%
 
-program:
-	program expr {;}
-	| expr {;}
-	;
-
 list:
 	STARTLIST listmed ENDLIST {
 		$$ = $2;
-		printf("%s", $2);
-		$$[0] = '\0';
 	}
 	;
 
 listmed:
 	STARTITEM string {
 		$$ = $2;
-		char temp[300];
+		char temp[5000];
 		sprintf(temp, "%d. %s\n", $1, $2);
 		$$ = temp;
 	}
 	| listmed STARTITEM string {
-		char temp[300];
+		char temp[5000];
 		sprintf(temp, "%s%d. %s\n", $1, $2, $3);
 		$$ = temp;
 	}
@@ -63,26 +65,39 @@ listmed:
 expr:
 	OPENPARA string CLOSEPARA {
 		$$ = $2;
+		char temp[5000];
 		if ($$[0] == '$')
 		{
-			printf("%s\n", ++$$);
+			sprintf(temp, "%s\n", ++$$);
 		}
-		else printf("\t%s\n", $$);
-		$$[0] = '\0';
+		else sprintf(temp, "\t%s\n", $$);
+		$$ = temp;
 	}
-	| OPENPARA expr CLOSEPARA {;}
-	| list {;}
-	| heading {;}
+	| OPENPARA expr CLOSEPARA {
+		$$ = $2;
+		char temp[5000];
+		sprintf(temp, "\t%s\n", $$);
+		$$ = temp;
+	}
+	| string expr {
+		$$ = $1;
+		strcat($$, "\n");
+		strcat($$, $2);
+	}
+	| list {
+		$$ = $1;
+	}
+	| heading {
+		$$ = $1;
+	}
 	;
 
 heading:
 	STARTHEADING string ENDHEADING {
 		$$ = strupr($2);
-		char temp[500];
+		char temp[5000];
 		sprintf(temp, "\n%s\n", $$);
 		$$ = temp;
-		printf("%s", $$);
-		$$[0] = '\0';
 	}
 	;
 
@@ -99,6 +114,15 @@ string:
 		strcat($$, "\n");
 	}
 	;
+program:
+	program expr {
+		printf("%s", $2);
+	}
+	| expr {
+		printf("%s", $1);
+	}
+	;
+
 %%
 void yyerror(char *s) 
 {
